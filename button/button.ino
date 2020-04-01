@@ -1,51 +1,28 @@
-/*
-  Blink without Delay
-
-  Turns on and off a light emitting diode (LED) connected to a digital pin,
-  without using the delay() function. This means that other code can run at the
-  same time without being interrupted by the LED code.
-
-  The circuit:
-  - Use the onboard LED.
-  - Note: Most Arduinos have an on-board LED you can control. On the UNO, MEGA
-    and ZERO it is attached to digital pin 13, on MKR1000 on pin 6. LED_BUILTIN
-    is set to the correct LED pin independent of which board is used.
-    If you want to know what pin the on-board LED is connected to on your
-    Arduino model, check the Technical Specs of your board at:
-    https://www.arduino.cc/en/Main/Products
-
-  created 2005
-  by David A. Mellis
-  modified 8 Feb 2010
-  by Paul Stoffregen
-  modified 11 Nov 2013
-  by Scott Fitzgerald
-  modified 9 Jan 2017
-  by Arturo Guadalupi
-
-  This example code is in the public domain.
-
-  http://www.arduino.cc/en/Tutorial/BlinkWithoutDelay
-*/
-
-// constants won't change. Used here to set a pin number:
-const int ledPin =  LED_BUILTIN;// the number of the LED pin
+const int ledPin = LED_BUILTIN;
 const int redPin = 5;
 const int yellowPin = 6;
 const int greenPin = 7;
-const int buttonPin = 3; // interrupt pin 
+const int buttonInterruptPin = 3; // interrupt pin
+const int bit0Pin = 8;
+const int bit1Pin = 9;
+const int buttonPin = 10;
+
+const int STATE_PUSHES_ALLOWED = 0x0;
+const int STATE_PUSHES_BLOCKED  = 0x1;
+const int STATE_PUSHES_UNKNOWN = 0x2;
+const int STATE_BUSY           = 0x3;
 
 volatile bool pressed = false;
 
-// Variables will change:
-int ledState = LOW;             // ledState used to set the LED
+char ledState = LOW;
+char redState = LOW;
+char yellowState = LOW;
+char greenState = LOW;
+char buttonState = LOW;
 
-// Generally, you should use "unsigned long" for variables that hold time
-// The value will quickly become too large for an int to store
-unsigned long previousMillis = 0;        // will store last time LED was updated
+unsigned long previousMillis = 0;
 
-// constants won't change:
-const long interval = 250;           // interval at which to blink (milliseconds)
+const long interval = 250; // 250ms blink
 
 void setup() {
   // set the digital pin as output:
@@ -53,11 +30,42 @@ void setup() {
   pinMode(redPin, OUTPUT);
   pinMode(yellowPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
-  pinMode(buttonPin, INPUT);
+  pinMode(buttonInterruptPin, INPUT);
+  pinMode(bit0Pin, INPUT);
+  pinMode(bit1Pin, INPUT);
+  pinMode(buttonPin, OUTPUT);
+
+  attachInterrupt(digitalPinToInterrupt(buttonPin), handleButtonPress, RISING);
 }
 
 void loop() {
   unsigned long currentMillis = millis();
+
+  if (pressed) { // send a button pressed signal
+    pressed = false;
+    buttonState = !buttonState;
+    digitalWrite(buttonPin, buttonState);
+  }
+
+  int state = digitalRead(bit1Pin) << 1 | digitalRead(bit0Pin);
+
+  if ( state == STATE_PUSHES_ALLOWED ) {
+    digitalWrite(redPin, LOW);
+    digitalWrite(yellowPin, LOW);
+    digitalWrite(greenPin, HIGH);
+  }
+
+  if ( state == STATE_PUSHES_BLOCKED ) {
+    digitalWrite(redPin, HIGH);
+    digitalWrite(yellowPin, LOW);
+    digitalWrite(greenPin, LOW);
+  }
+
+  if ( state == STATE_PUSHES_UNKNOWN ) {
+    digitalWrite(redPin, LOW);
+    digitalWrite(yellowPin, HIGH);
+    digitalWrite(greenPin, LOW);
+  }
 
   if (currentMillis - previousMillis >= interval) {
     // save the last time you blinked the LED
@@ -70,8 +78,12 @@ void loop() {
       ledState = LOW;
     }
 
-    // set the LED with the ledState of the variable:
-    digitalWrite(5, ledState);
+    if ( state == STATE_BUSY ) {
+      digitalWrite(redPin, LOW);
+      digitalWrite(yellowPin, ledState);
+      digitalWrite(greenPin, LOW);
+    }
+    digitalWrite(ledPin, ledState); // debug
   }
 }
 
