@@ -2,7 +2,7 @@ const int ledPin = LED_BUILTIN;
 const int redPin = 5;
 const int yellowPin = 6;
 const int greenPin = 7;
-const int buttonInterruptPin = 3; // interrupt pin
+const int buttonInterruptPin = 11; // interrupt pin
 const int bit0Pin = 8;
 const int bit1Pin = 9;
 const int buttonPin = 10;
@@ -24,28 +24,28 @@ unsigned long previousMillis = 0;
 
 const long interval = 250; // 250ms blink
 
+void handleButtonPress() { // send a button pressed signal
+  buttonState = !buttonState;
+  digitalWrite(buttonPin, buttonState);
+  digitalWrite(ledPin, HIGH);
+}
+
 void setup() {
   // set the digital pin as output:
   pinMode(ledPin, OUTPUT);
   pinMode(redPin, OUTPUT);
   pinMode(yellowPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
-  pinMode(buttonInterruptPin, INPUT);
+  pinMode(buttonInterruptPin, INPUT_PULLUP);
   pinMode(bit0Pin, INPUT);
   pinMode(bit1Pin, INPUT);
   pinMode(buttonPin, OUTPUT);
 
-  attachInterrupt(digitalPinToInterrupt(buttonPin), handleButtonPress, RISING);
+  attachInterrupt(digitalPinToInterrupt(buttonInterruptPin), handleButtonPress, RISING);
 }
 
 void loop() {
   unsigned long currentMillis = millis();
-
-  if (pressed) { // send a button pressed signal
-    pressed = false;
-    buttonState = !buttonState;
-    digitalWrite(buttonPin, buttonState);
-  }
 
   int state = digitalRead(bit1Pin) << 1 | digitalRead(bit0Pin);
 
@@ -85,8 +85,4 @@ void loop() {
     }
     digitalWrite(ledPin, ledState); // debug
   }
-}
-
-void handleButtonPress() {
-  pressed = true;
 }
