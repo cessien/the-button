@@ -2,7 +2,7 @@ const int ledPin = LED_BUILTIN;
 const int redPin = 5;
 const int yellowPin = 6;
 const int greenPin = 7;
-const int buttonInterruptPin = 11; // interrupt pin
+const int buttonInterruptPin = 3; // interrupt pin
 const int bit0Pin = 8;
 const int bit1Pin = 9;
 const int buttonPin = 10;
@@ -36,12 +36,12 @@ void setup() {
   pinMode(redPin, OUTPUT);
   pinMode(yellowPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
-  pinMode(buttonInterruptPin, INPUT_PULLUP);
+  pinMode(buttonInterruptPin, INPUT);
   pinMode(bit0Pin, INPUT);
   pinMode(bit1Pin, INPUT);
   pinMode(buttonPin, OUTPUT);
 
-  attachInterrupt(digitalPinToInterrupt(buttonInterruptPin), handleButtonPress, RISING);
+  attachInterrupt(1, handleButtonPress, CHANGE);
 }
 
 void loop() {
